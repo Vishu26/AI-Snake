@@ -1,0 +1,93 @@
+<html>
+<head>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.11.6"></script>
+</head>
+<body>
+	<script type="text/javascript">
+		 var x_text, y_text;
+		function readTextFile(file)
+		{
+		    let rawFile = new XMLHttpRequest();
+		    rawFile.open("GET", file, false);
+		    rawFile.onreadystatechange = function ()
+		    {
+		        if(rawFile.readyState === 4)
+		        {
+		            if(rawFile.status === 200 || rawFile.status == 0)
+		            {
+		                if(file.search(/x_train/)!=-1){
+		                	x_text = rawFile.responseText;
+		                }
+
+		                else{
+		                	y_text = rawFile.responseText;
+		                }
+		            }
+		        }
+		    }
+		    rawFile.send(null);
+		    //return allText
+		}
+		
+		const model = tf.sequential()
+		model.add(tf.layers.dense({units:256, inputShape:[4], activation:'relu'}))
+		model.add(tf.layers.dense({units:512, activation:'relu'}))
+		model.add(tf.layers.dense({units:5, activation:'softmax'}))
+
+		const learningRate = 0.001
+		const optimizer = tf.train.adam(learningRate)
+		//const loss = tf.losses.softmaxCrossEntropy()
+
+		model.compile({loss:tf.losses.softmaxCrossEntropy, optimizer:optimizer})
+
+		/*const x = tf.tensor2d([[1, 2, 3, 4], [5, 6, 7, 8]])
+		const y = tf.tensor2d([[0, 0, 1, 0], [1, 0, 0, 0]])
+
+		model.fit(x, y,{epochs:1000}).then(()=>{
+			console.log(model.predict(tf.tensor2d([[12, 34, 45, 22]])).dataSync())
+		})*/
+
+		readTextFile('http://127.0.0.1:8000/x_train.txt')
+		readTextFile('http://127.0.0.1:8000/y_train.txt')
+
+		//console.log(y_text)
+
+		x_text = x_text.split(',')
+		y_text = y_text.split(',')
+
+		var x_train = []
+		var y_train = []
+
+		for (var i=0;i<x_text.length-4;i+=4){
+			let arr = [x_text[i], x_text[i+1], x_text[i+2], x_text[i+3]].map(x=>parseInt(x))
+			x_train.push(arr)
+		}
+
+		for (var i=0;i<y_text.length-5;i+=5){
+			let arr = [y_text[i], y_text[i+1], y_text[i+2], y_text[i+3], y_text[i+4]].map(x=>parseInt(x))
+			y_train.push(arr)
+		}
+
+		console.log(y_train.length)
+
+		const x = tf.tensor2d(x_train)
+		const y = tf.tensor2d(y_train)
+
+		model.fit(x, y,{epochs:100}).then(()=>{
+			//console.log(model.predict(tf.tensor2d([[]])).dataSync())
+			console.log('hey')
+		})
+
+
+	</script>
+	<!--<script type="text/javascript">
+		
+		(async () => {
+    		var model = await tf.loadModel('http://127.0.0.1:8000/keras_model/model.json')
+    		console.log(tf.argMax(model.predict(tf.tensor2d([[15,15,11,10]])), 1).dataSync())
+		})();
+		//const model = await tf.loadModel('http://127.0.0.1:8000/keras_model/model.json')
+		//console.log(model.execute(tf.tensor2d([[15,15,11,10]])).dataSync())
+	</script>-->
+</body>
+</html>
